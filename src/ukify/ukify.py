@@ -232,6 +232,7 @@ def maybe_decompress(filename: Union[str, Path]) -> bytes:
             return get_zboot_kernel(f)
         else:
             # not compressed aarch64 and riscv64
+            f.seek(0)
             return f.read()
 
     if start.startswith(b'\x1f\x8b'):

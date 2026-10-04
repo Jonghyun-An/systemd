@@ -673,6 +673,36 @@ baz,3
     assert found is True
 
 
+@pytest.mark.parametrize(
+    'data',
+    [
+        b'MZ',
+        b'MZ\x40\xfa',
+        b'MZ\x40\xfa\x00\x00\x00\x00payload',
+        b'MZo\x10\x00\x00\x00\x00' + bytes(range(64)),
+    ],
+)
+def test_uncompressed_mz_preserves_bytes(tmp_path, data):
+    kernel = tmp_path / 'linux'
+    kernel.write_bytes(data)
+    assert ukify.maybe_decompress(kernel) == data
+
+
+def test_uncompressed_mz_zboot_control(tmp_path):
+    import gzip
+    import struct
+
+    content = b'Linux version 6.12.0-test (builder@host)'
+    compressed = gzip.compress(content)
+    header = bytearray(64)
+    header[:8] = b'MZ\0\0zimg'
+    struct.pack_into('<II', header, 8, len(header), len(compressed))
+    header[0x18:0x1E] = b'gzip\0\0'
+    kernel = tmp_path / 'linux'
+    kernel.write_bytes(header + compressed)
+    assert ukify.maybe_decompress(kernel) == content
+
+
 def unbase64(filename):
     tmp = tempfile.NamedTemporaryFile()
     base64.decode(filename.open('rb'), tmp)
