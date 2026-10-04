@@ -319,6 +319,30 @@ def test_parse_args_sign_initrd_pcrs(signing_args):
         ukify.parse_args(args)
 
 
+@pytest.mark.parametrize(
+    'spec',
+    ['.cmdline:textjunk', '.linux:binarybad', '.cmdline:text@', '.linux:binary/other', '.cmdline:text\n'],
+)
+def test_output_section_invalid_suffix(spec):
+    with pytest.raises(ValueError, match='Cannot parse section spec'):
+        ukify.Section.parse_output(spec)
+
+
+@pytest.mark.parametrize(
+    'spec, mode, output',
+    [
+        ('.cmdline:text', 'text', None),
+        ('.linux:binary', 'binary', None),
+        ('.cmdline:text@a file', 'text', pathlib.Path('a file')),
+        ('.linux:binary@a:b', 'binary', pathlib.Path('a:b')),
+    ],
+)
+def test_output_section_valid_controls(spec, mode, output):
+    section = ukify.Section.parse_output(spec)
+    assert section.output_mode == mode
+    assert section.content == output
+
+
 def test_parse_sections():
     opts = ukify.parse_args(
         [
