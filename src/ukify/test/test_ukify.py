@@ -183,6 +183,32 @@ def test_apply_config(tmp_path):
     assert ns.phase_path_groups == [['enter-initrd:leave-initrd:sysinit:ready:shutdown:final']]
 
 
+@pytest.mark.parametrize(
+    'value', ['sha256, sha512', 'sha256 , sha512', ' sha256\t,\nsha512 ', 'sha256 sha512', 'sha256,sha512']
+)
+def test_pcr_list_whitespace_banks(value):
+    assert ukify.parse_banks(value) == ['sha256', 'sha512']
+
+
+@pytest.mark.parametrize(
+    'value',
+    [
+        'enter-initrd, leave-initrd',
+        ' enter-initrd , leave-initrd ',
+        'enter-initrd\tleave-initrd',
+        'enter-initrd,leave-initrd',
+    ],
+)
+def test_pcr_list_whitespace_phases(value):
+    assert ukify.parse_phase_paths(value) == ['enter-initrd', 'leave-initrd']
+
+
+@pytest.mark.parametrize('value', ['', 'enter-initrd,,leave-initrd', 'enter-initrd:unknown'])
+def test_pcr_list_whitespace_invalid_controls(value):
+    with pytest.raises(ukify.argparse.ArgumentTypeError):
+        ukify.parse_phase_paths(value)
+
+
 def test_parse_args_minimal():
     with pytest.raises(ValueError):
         ukify.parse_args([])
