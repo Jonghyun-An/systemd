@@ -51,7 +51,8 @@
     API to monitor file systems. Due to that, it suffers by the same
     limitations as inotify, and for example cannot be used to monitor
     files or directories changed by other machines on remote NFS file
-    systems.</para>
+    systems. Watching a directory is not recursive: changes to files
+    in subdirectories do not trigger the path unit.</para>
 
     <para>When a service unit triggered by a path unit terminates (regardless whether it exited successfully
     or failed), monitored paths are checked immediately again, and the service accordingly restarted
