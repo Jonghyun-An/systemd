@@ -350,7 +350,10 @@ class Uname:
             if magic != b'HdrS':
                 raise ValueError('Real-Mode Kernel Header magic not found')
             f.seek(0x20E)
-            offset = f.read(1)[0] + f.read(1)[0] * 256  # Pointer to kernel version string
+            version_offset = f.read(2)
+            if len(version_offset) != 2:
+                raise ValueError('Truncated kernel version offset')
+            offset = int.from_bytes(version_offset, byteorder='little')  # Pointer to kernel version string
             f.seek(0x200 + offset)
             text = f.read(128)
         text = text.split(b'\0', maxsplit=1)[0]

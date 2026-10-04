@@ -710,6 +710,25 @@ def unbase64(filename):
     return tmp
 
 
+@pytest.mark.parametrize('offset_bytes', [b'', b'\x20'])
+def test_x86_version_offset_truncated(tmp_path, offset_bytes):
+    kernel = tmp_path / 'linux'
+    data = bytearray(0x20E)
+    data[0x202:0x206] = b'HdrS'
+    kernel.write_bytes(data + offset_bytes)
+    with pytest.raises(ValueError, match='Truncated kernel version offset'):
+        ukify.Uname.scrape_x86(kernel)
+
+
+def test_x86_version_offset_valid_control(tmp_path):
+    kernel = tmp_path / 'linux'
+    data = bytearray(0x220)
+    data[0x202:0x206] = b'HdrS'
+    data[0x20E:0x210] = b'\x20\x00'
+    kernel.write_bytes(data + b'6.12.0-test (builder@host) #1 SMP\0')
+    assert ukify.Uname.scrape_x86(kernel) == '6.12.0-test'
+
+
 def test_uname_scraping(kernel_initrd):
     if kernel_initrd is None:
         pytest.skip('linux+initrd not found')
