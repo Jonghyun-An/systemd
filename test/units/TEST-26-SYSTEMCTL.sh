@@ -369,6 +369,13 @@ systemctl status "sys-devices-*-ttyS0.device"
 systemctl status -- -.mount
 systemctl status 1
 
+# Exited command lines must retain argument boundaries in status output.
+systemd-run --unit=status-command-quoting --property=Type=oneshot --property=RemainAfterExit=yes \
+    /usr/bin/true 'curl -fsk https://127.0.0.1:9000/health' '' '$HOME'
+systemctl status --full --no-pager status-command-quoting | \
+    grep -F 'ExecStart=/usr/bin/true "curl -fsk https://127.0.0.1:9000/health" "" "\$HOME"' >/dev/null
+systemctl stop status-command-quoting
+
 # --marked
 systemctl restart "$UNIT_NAME"
 systemctl set-property "$UNIT_NAME" "Markers=needs-reload needs-restart"
